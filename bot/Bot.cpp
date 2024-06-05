@@ -26,7 +26,7 @@ Bot::Bot()
     // all of that should started here and get PORT as argument
 }
 
-Bot::~Bot()
+Bot::Bot(int fd, std::string ip, std::string hostname): Client(fd, ip, hostname) 
 {
 }
 
