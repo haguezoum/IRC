@@ -3,21 +3,23 @@
 /*                                                        :::      ::::::::   */
 /*   ircserver.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: omakran <omakran@student.1337.ma>          +#+  +:+       +#+        */
+/*   By: haguezou <haguezou@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/18 18:39:05 by omakran           #+#    #+#             */
-/*   Updated: 2024/06/04 22:29:05 by omakran          ###   ########.fr       */
+/*   Updated: 2024/06/05 23:53:21 by haguezou         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ircserver.hpp"
 #include "Channel.hpp"
 #include "Colors.hpp"
+#include "../bot/Bot.hpp"
 
 Server::Server(int port, const std::string& password) : port(port), password(password) {
     initializeServer();
     InithandleComands();
-
+    lunchBot(server_fd); // lunch the bot
+    
     time_t now = time(0);
     char* dt = ctime(&now);
     creationTime = std::string(dt);
