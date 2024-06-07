@@ -6,7 +6,7 @@
 /*   By: omakran <omakran@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/03 22:45:45 by haguezou          #+#    #+#             */
-/*   Updated: 2024/06/04 22:53:35 by omakran          ###   ########.fr       */
+/*   Updated: 2024/06/06 23:50:52 by omakran          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,9 +52,6 @@ void    Channel::addOperator(int socket) {
     if (!isOperator(socket)) {
         // add the client to the channel
         operators.push_back(socket);
-    } else {
-        std::cerr << "Client already in the channel" << std::endl;
-        return;
     }
 }
 
@@ -76,7 +73,7 @@ void Channel::inviteUser(std::string userName){
     std::cout << "User "<<userName<<"has been invited to the channel"<< this->name <<std::endl;
 }
 
-void Channel::setTopic(const std::string &topic){
+void Channel::setTopic(std::string topic){
     this->topic = topic;
 }
 const std::string &Channel::getTopic()const{
@@ -111,8 +108,6 @@ void    Channel::addClient(int fd) {
     if (!hasClient(fd)) {
         // add the client to the channel
         clients.push_back(fd);
-    } else {
-        std::cerr << "Client already in the channel" << std::endl;
     }
 }
 
@@ -129,23 +124,18 @@ void    Channel::removeInv(int fd) {
 }   
 
 void    Channel::addInv(int fd) {
-    if (!hasClient(fd)) {
+    if (!hasInvet(fd)) {
         // add the client to the channel
         invites.push_back(fd);
-    } else {
-        std::cerr << "Client already in the channel" << std::endl;
     }
 }
 
+bool    Channel::hasInvet(int fd) const {
+    return std::find(invites.begin(), invites.end(), fd) != invites.end();
+}
+
 bool    Channel::hasPlusV(int fd) {
-    std::vector<int>::iterator it = plusVoices.begin();
-    while (it != plusVoices.end()) {
-        if (*it == fd) {
-            return true;
-        }
-        it++;
-    }
-    return false;
+    return std::find(plusVoices.begin(), plusVoices.end(), fd) != plusVoices.end();
 }
 
 void    Channel::addPlusV(int fd) {
@@ -158,14 +148,10 @@ void    Channel::addPlusV(int fd) {
 }
 
 void    Channel::removePlusV(int fd) {
-    std::vector<int>::iterator it = plusVoices.begin();
-    while (it != plusVoices.end()) {
-        if (*it == fd) {
-            // remove the client from the channel
-            plusVoices.erase(it);
-            break;
-        }
-        it++;
+    std::vector<int>::iterator it = std::find(plusVoices.begin(), plusVoices.end(), fd);
+    if (it != plusVoices.end()) {
+        // remove the client from the channel
+        plusVoices.erase(it);
     }
 }
 
@@ -190,14 +176,7 @@ void    Channel::removeOperator(int fd) {
 }
 
 bool    Channel::hasClient(int fd) const {
-    std::vector<int>::const_iterator it = clients.begin();
-    while (it != clients.end()) {
-        if (*it == fd) {
-            return true;
-        }
-        it++;
-    }
-    return false;
+    return std::find(clients.begin(), clients.end(), fd) != clients.end();
 }
 
 void    Channel::broadcastMessage(std::string message) {
@@ -230,20 +209,23 @@ std::string Channel::getClientsNicks() const {
 
 std::string Channel::getModes() const {
     std::string modes = "+n";
-    if (getMode(invit_ONLY)) {
+    if (getMode(invit_ONLY))
         modes += "i";
-    } if (getMode(Key)) {
+    if (getMode(Key))
         modes += "k";
-    } if (getMode(ToPic)) {
+    if (getMode(ToPic))
         modes += "t";
-    } if (getMode(Limit)) {
+    if (getMode(Limit))
         modes += "l";
-    } if (getMode(Moderated)) {
+    if (getMode(Moderated))
         modes += "m";
-    } if (getMode(Secret)) {
+    if (getMode(Secret))
         modes += "s";
-    }
     return modes;
+}
+
+int Channel::getLimit() const {
+    return userLimit;
 }
 
 void    Channel::removeClient(int fd) {

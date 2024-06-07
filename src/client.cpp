@@ -6,7 +6,7 @@
 /*   By: omakran <omakran@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/20 00:45:48 by omakran           #+#    #+#             */
-/*   Updated: 2024/06/03 01:09:10 by omakran          ###   ########.fr       */
+/*   Updated: 2024/06/06 23:00:41 by omakran          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,7 +61,7 @@ void    Client::handleMessage(const std::string& message) {
             handlePrivmsg(parts[1], message.substr(message.find(parts[2])));
     } 
     else {
-        std::cerr << "Uknowon command: " << command << std::endl;
+        std::cerr << "Unknowon command: " << command << std::endl;
     }
 }
 
@@ -167,4 +167,12 @@ void    Client::setUserName(std::string userName) {
 
 const std::string&    Client::getNick() const {
     return nickname;
+}
+
+std::string Client::getIdentifierNetwork() const {
+    return nickname + "!" + username + "@" + hostname;
+}
+
+std::string Client::intro() const {
+    return ":" + getIdentifierNetwork() + " ";
 }

@@ -6,7 +6,7 @@
 /*   By: haguezou <haguezou@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/18 18:39:05 by omakran           #+#    #+#             */
-/*   Updated: 2024/06/05 23:53:21 by haguezou         ###   ########.fr       */
+/*   Updated: 2024/06/07 02:51:22 by haguezou         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,6 @@
 Server::Server(int port, const std::string& password) : port(port), password(password) {
     initializeServer();
     InithandleComands();
-    lunchBot(server_fd); // lunch the bot
     
     time_t now = time(0);
     char* dt = ctime(&now);
@@ -45,7 +44,7 @@ void    Server::InithandleComands(void) {
     commands["QUIT"] = &Server::QUIT;
     commands["KICK"] = &Server::KICK;
     commands["INVITE"] = &Server::INVITE;
-    commands["TOPIC "] = &Server::TOPIC;
+    commands["TOPIC"] = &Server::TOPIC;
     commands["ISON"] = &Server::ISON;
     commands["MODE"] = &Server::MODE;
 }
@@ -201,7 +200,7 @@ void    Server::handleClientMessage(int client_fd) {
 Client& Server::getClient(int fd) {
     std::map<int, Client*>::iterator it = clients.find(fd); // find the client object associated with the file descriptor.
     if (it == clients.end()) {
-        throw std::runtime_error("Client not found for fd: " + std::to_string(fd));
+        throw std::runtime_error("Client not found for fd");
     }
     return *it->second; // return the client object.
 }
@@ -220,7 +219,7 @@ void    Server::commandsProcess(std::vector<std::string> cmds, int fd_client) {
     Client& client = getClient(fd_client);
     std::vector<std::string>::iterator it = cmds.begin();
     while (it < cmds.end()) {
-        std::cout << BOLDCYAN << "<<<<< Recieved from socket: " << *it << RESET << std::endl;
+        std::cout << BOLDCYAN << "<<<<< Recieved from socket: " << RESET << *it << std::endl;
         std::string command_name;
         std::string command_params;
         std::stringstream ss(*it);
@@ -229,22 +228,20 @@ void    Server::commandsProcess(std::vector<std::string> cmds, int fd_client) {
         std::transform(command_name.begin(), command_name.end(), command_name.begin(), ::toupper); // convert the command name to uppercase
         std::getline(ss, command_params, '\0'); // extract the command parameters
         if (command_name != "PASS" && !client.isAuthenticated()) // if the client is not authenticated
-            sendMessageCommand(fd_client, ":ircserver 451 : You have not registered");
+            sendMessageCommand(fd_client, intro() + "451 : You have not registered");
         else if (command_name != "PASS" && command_name != "NICK" && command_name != "USER" && !client.isRegistered()) // if the client is not registered
-            sendMessageCommand(fd_client, ":ircserver 451 : You have not registered");
+            sendMessageCommand(fd_client, intro() + "451 : You have not registered");
         else if (commands.find(command_name) == commands.end()) // if the command is not found
-            sendMessageCommand(fd_client, ":ircserver 421 " + command_name + " : Unknown command");
+            sendMessageCommand(fd_client, intro() + "421 " + command_name + " : Unknown command");
         else if (command_name == "QUIT")
             QUIT(fd_client, command_params);
-        else {
+        else 
             (this->*commands[command_name])(fd_client, command_params); // means that the command is found, so call the command handler.
-        }
         it++;
     }
 }
 
 void    Server::sendMessageToClientChannels(int client_fd, const std::string &message) {
-    //Client& client = getClient(client_fd); // retrieve the client object associated with client_fd
     std::vector<Channel*> channels = getChannels(client_fd);
     for (size_t i = 0; i < channels.size(); i++) {
         channels[i]->brodcastMessage(message, client_fd); // broadcast the message to the channel
@@ -263,7 +260,7 @@ std::vector<Channel*>   Server::getChannels(int client_fd) {
     return result;
 }
 
-Client  &Server::getClientByNick(const std::string& nick) {
+Client  &Server::getClientByNick(std::string nick) {
     // find the client object associated with the nickname.
     std::map<int, Client*>::iterator it = clients.begin();
     for (; it != clients.end() && it->second->getNick() != nick ; it++)
@@ -320,6 +317,10 @@ void    Server::removeClient(int fd) {
         fds.erase(it2); // remove the client from the list of file descriptors to poll.
     }
     std::cout << BOLDRED << "Client desconnected" << RESET << std::endl;
+}
+
+std::string Server::intro(void) {
+    return ":ircserver ";
 }
 
 void    Server::cleanUp() {
